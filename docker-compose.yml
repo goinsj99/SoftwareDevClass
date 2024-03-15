@@ -10,28 +10,24 @@
 # [6] Secrets    | https://docs.docker.com/engine/swarm/secrets/#use-secrets-in-compose
 # ------------------------------------------------------------------------------
 
-# This section defines all of our components, each which is a docker image [1].
+# This section defines all of our components, each which is itself a docker image [1].
 services:
-  # This section defines our Node.js image [3].
+
+  # ------------------------------------------- # This section defines our Node.js image [3].
   web:
-    image: "node:${NODE_VERSION:-14}"
-    user: "node"                            # Use a non-root user node
-    working_dir: /home/node/app             # with home directory /home/node/app
+    image: node:12
+    user: "node"                                # Use a non-root user node
+    working_dir: /home/node/app                 # with home directory /home/node/app
     # environment:
-    #   - NODE_ENV=production               # << Use this when deploying your 
-    #                                       # application, currently we have it 
-    #                                       # off so that changes to *.es are
-    #                                       # visible without restarting 
-    #                                       # docker-compose.
+    #   - NODE_ENV=production                   # << Use this when deploying your application,
+    #                                           #   currently we have it off so that changes to
+    #                                           #   *.ejs are visible without restarting docker-compose.
     ports:
-        - "3000:3000"                       # Here we do need to publish the 
-                                            # port for viewing on the host.
+        - "3000:3000"                           # Here we do need to publish the port for viewing on the host.
     volumes:
-      - ./:/home/node/app                   # Binds the current directory 
-                                            # (containing our source code) into 
-                                            # the image, so that changes made 
-                                            # to the source code on the host 
-                                            # are reflected witin the container.
-    command: "npm run testandrun"           # This will run your tests, then 
-                                            # nodemon, see  the command in 
-                                            # package.json.
+      - ./:/home/node/app                       # Binds the current directory (containing our source code) into the image,
+                                                #  so that changes made to the source code on the host
+                                                #  are reflected witin the container.
+    command: "npm run dev"                      # This will run nodemon so    
+                                                # that changes to server.js will 
+                                                # update in real time.

@@ -1,94 +1,77 @@
-/** Load components
- * Express      - A Node.js Framework
- * Body-Parser  - A tool to help use parse the data in a post request
- */
-const express = require("express");
-const bodyParser = require("body-parser");
+// Load the modules
+var express = require('express'); //Express - a web application framework that provides useful utility functions like 'http'
+var app = express();
+var bodyParser = require('body-parser'); // Body-parser -- a library that provides functions for parsing incoming requests
+app.use(bodyParser.json());              // Support json encoded bodies
+app.use(bodyParser.urlencoded({ extended: true })); // Support encoded bodies
+const axios = require('axios');
+const qs = require('query-string');
 
-/** express configuration
- * - Support json encoded bodies
- * - Support encoded bodies
- */
-const app = express();
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+// Set the view engine to ejs
+app.set('view engine', 'ejs');
+app.use(express.static(__dirname + '/'));// Set the relative path; makes accessing the resource directory easier
 
-const ops = [
-  {
-    id: 1,
-    name: "Add",
-    sign: "+",
-  },
-  {
-    id: 2,
-    name: "Subtract",
-    sign: "-",
-  },
-  {
-    id: 3,
-    name: "Multiply",
-    sign: "*",
-  },
-];
 
-// Simple get api provided to check if the node.js starts up successfully. Opening up http://localhost:3000 should display the below returned json.
-app.get("/", (req, res) => {
-  res.json({ status: "success", message: "Welcome!" });
+// Home page - DON'T CHANGE
+app.get('/', function(req, res) {
+  res.render('pages/NYTimes_home', {
+    my_title: "NYTimes search",
+    items: '',
+    error: false,
+    message: ''
+  });
 });
 
-app.get("/operations", (request, response) => {
-  response.send(ops);
+//to request data from API for given search criteria
+//TODO: You need to edit the code for this route to search for movie reviews and return them to the front-end
+app.post('/get_feed', function(req, res) {
+  var title = req.body.title; //TODO: Remove null and fetch the param (e.g, req.body.param_name); Check the NYTimes_home.ejs file or console.log("request parameters: ", req) to determine the parameter names
+  var api_key = 'Wcck2A6sbLQUFS0FmcilhokmnA155egv'; // TOOD: Remove null and replace with your API key you received at the setup
+
+  if(title) {
+    axios({
+      url: `https://api.nytimes.com/svc/movies/v2/reviews/search.json?query=${title}`,
+        method: 'GET',
+        dataType:'json',
+      })
+        .then(items => {
+          // TODO: Return the reviews to the front-end (e.g., res.render(...);); Try printing 'items' to the console to see what the GET request to the Twitter API returned.
+          // Did console.log(items) return anything useful? How about console.log(items.data.results)?
+          // Stuck? Look at the '/' route above
+          //console.log(items);
+          console.log(items.data.results);
+          for(var i=0; i < items.data.results.length; i++){
+           console.log(items.data.results[i]); 
+          }
+          res.render('pages/NYTimes_home',{
+            my_title: "NYTimes Movie Reviews",
+            items: items.data.results,
+            error: true
+          })
+        })
+        .catch(error => {
+          if(error.response){
+            console.log(error.response.data);
+            console.log(error.response.status);
+            res.render('pages/NYTimes_home',{
+              my_title: "NYTimes Movie Reviews",
+              items: '',
+              error: true,
+              message: error
+            })
+          }
+          
+        });
+
+
+  }
+  else {
+    // TODO: Render the home page and include an error message (e.g., res.render(...);); Why was there an error? When does this code get executed? Look at the if statement above
+    // Stuck? On the web page, try submitting a search query without a search term
+    
+  }
 });
 
-// GET (BY ID)
-app.get("/operations/:id", (request, response) => {
-  const opsId = request.params.id;
-  const op = ops.find((op) => op.id === parseInt(opsId));
-  if (!op)
-    return response
-      .status(404)
-      .send("The task with the provided ID does not exist.");
-  response.send(op);
-});
 
-// POST, add to the list of ops
-app.post("/operations", (request, response) => {
-  const op = {
-    id: ops.length + 1,
-    name: request.body.name,
-    sign: request.body.sign,
-  };
-
-  ops.push(op);
-  response.status(201).send(op);
-});
-
-// =============================================================================
-// Part B TODO: Add your code support two new API's /add and /divide here.
-app.post("/add", (req, res) => {
-  var num1 = Number(req.body.num1);
-  var num2 = Number(req.body.num2);
-  const add = {
-    sum: num1 + num2,
-  };
-   if(num1 == 0 || num2 == 0){
-     return res.status(201).send("Cant add numbers less than or equal to 0");
-   }
-   else{
-   res.status(200).send(add);}
-});
-  
-app.post("/divide", (req, res) => {
-  var num1 = Number(req.body.num1);
-  var num2 = Number(req.body.num2);
-  const div = {
-    quotient: num1 / num2,
-  };
-   if( num2 == 0){
-     return res.status(201).send("Cant divide by zero");
-   }
-   else{
-   res.status(200).send(div);}
-});
-module.exports = app.listen(3000);
-console.log("3000 is the magic port");
+app.listen(3000);
+console.log('3000 is the magic port');
